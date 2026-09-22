@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyberdeck-pi"
+version = "0.1.0"
+description = "Raspberry Pi host software for El Sapo's WiFi/BLE recon Toadlets"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pyserial>=3.5",
+    "pyserial-asyncio-fast>=0.11",
+    "pydantic>=2.9",
+    "tomli_w>=1.0",
+]
+
+[project.scripts]
+cyberdeck-pi = "cyberdeck_pi.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

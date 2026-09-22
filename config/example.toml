@@ -1,0 +1,30 @@
+# Copy this to config/default.toml (or any path of your choosing) and
+# adjust device paths, baud rates, and thresholds to match your hardware.
+# Set source = "mock" on any toadlet to run without that hardware attached.
+
+[web]
+host = "0.0.0.0"
+port = 8080
+
+[storage]
+root = "data"
+
+[toadlets.wifi]
+source = "real"
+device = "/dev/ttyAMA2"
+baud = 921600
+offline_threshold_s = 15
+
+[toadlets.bt]
+source = "real"
+device = "/dev/ttyAMA3"
+baud = 115200
+offline_threshold_s = 20
+
+[toadlets.rfid]
+source = "real"
+device = "/dev/ttyUSB0"
+baud = 115200
+offline_threshold_s = 10
+region = "NORTHAMERICA"
+read_power_cdbm = 500

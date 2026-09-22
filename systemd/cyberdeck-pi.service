@@ -1,0 +1,16 @@
+[Unit]
+Description=El Sapo recon dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deck
+Group=dialout
+WorkingDirectory=/home/deck/CyberDeck_Pi
+ExecStart=/home/deck/CyberDeck_Pi/.venv/bin/cyberdeck-pi --config config/default.toml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

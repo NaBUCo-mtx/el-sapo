@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>El Sapo</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 1rem;
+    background: #111;
+    color: #eee;
+  }
+  h1 { font-size: 1.1rem; margin: 0 0 1rem; }
+  .panes {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 700px) {
+    .panes { grid-template-columns: 1fr 1fr; }
+  }
+  @media (min-width: 1050px) {
+    .panes { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  .pane {
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .pane h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .status {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #333;
+  }
+  .status.capture {
+    background: #7a2323;
+    color: #fff;
+  }
+  .status.online {
+    background: #1f5c33;
+    color: #fff;
+  }
+  .status.offline {
+    background: #5c1f1f;
+    color: #fff;
+  }
+  .mode-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .mode-row select { flex: 1; min-width: 0; }
+  .mode-row input { width: 6rem; }
+  select, input, button { font: inherit; }
+  .settings-toggle {
+    background: none;
+    border: 1px solid #444;
+    color: inherit;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    cursor: pointer;
+  }
+  .settings {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.35rem 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .settings[hidden] { display: none; }
+  .settings label { color: #999; }
+  .settings input[list], .settings select, .settings input[type="number"] { width: 100%; }
+  .settings .settings-actions { grid-column: 1 / -1; display: flex; gap: 0.5rem; align-items: center; }
+  .settings .settings-status { font-size: 0.75rem; color: #999; }
+  @media (prefers-color-scheme: light) {
+    .settings-toggle { border-color: #ccc; }
+    .settings { background: #fff; border-color: #eee; }
+  }
+  .log {
+    flex: 1;
+    overflow-y: auto;
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    background: #0a0a0a;
+    border-radius: 4px;
+    padding: 0.5rem;
+    max-height: 60vh;
+  }
+  .log div { white-space: pre-wrap; border-bottom: 1px solid #222; padding: 0.15rem 0; }
+  @media (prefers-color-scheme: light) {
+    body { background: #f7f7f7; color: #111; }
+    .pane { border-color: #ddd; }
+    .status { background: #e5e5e5; }
+    .log { background: #fff; border: 1px solid #eee; }
+    .log div { border-bottom-color: #eee; }
+  }
+</style>
+</head>
+<body>
+<h1>El Sapo</h1>
+<datalist id="serial-ports"></datalist>
+<div class="panes">
+  <section class="pane" data-toadlet="wifi">
+    <h2>
+      WiFi Toadlet
+      <span>
+        <span class="status capture" data-role="capture" hidden></span>
+        <span class="status" data-role="online">-</span>
+        <span class="status" data-role="mode">-</span>
+        <button class="settings-toggle" data-role="settings-toggle" type="button">&#9881;</button>
+      </span>
+    </h2>
+    <div class="mode-row">
+      <select data-role="mode-select"></select>
+      <input data-role="mode-param" placeholder="param" />
+      <button data-role="mode-set">Set</button>
+    </div>
+    <div class="settings" data-role="settings" hidden>
+      <label for="wifi-device">device</label>
+      <input id="wifi-device" data-role="cfg-device" list="serial-ports" placeholder="/dev/ttyAMA2" />
+      <label for="wifi-baud">baud</label>
+      <input id="wifi-baud" data-role="cfg-baud" type="number" min="1" />
+      <label for="wifi-source">source</label>
+      <select id="wifi-source" data-role="cfg-source">
+        <option value="real">real</option>
+        <option value="mock">mock</option>
+      </select>
+      <label for="wifi-offline">offline after (s)</label>
+      <input id="wifi-offline" data-role="cfg-offline" type="number" min="0" step="0.1" />
+      <div class="settings-actions">
+        <button data-role="cfg-save" type="button">Apply</button>
+        <span class="settings-status" data-role="cfg-status"></span>
+      </div>
+    </div>
+    <div class="log" data-role="log"></div>
+  </section>
+  <section class="pane" data-toadlet="bt">
+    <h2>
+      BT Toadlet
+      <span>
+        <span class="status" data-role="online">-</span>
+        <span class="status" data-role="mode">-</span>
+        <button class="settings-toggle" data-role="settings-toggle" type="button">&#9881;</button>
+      </span>
+    </h2>
+    <div class="mode-row">
+      <select data-role="mode-select"></select>
+      <input data-role="mode-param" placeholder="param" />
+      <button data-role="mode-set">Set</button>
+    </div>
+    <div class="settings" data-role="settings" hidden>
+      <label for="bt-device">device</label>
+      <input id="bt-device" data-role="cfg-device" list="serial-ports" placeholder="/dev/ttyAMA3" />
+      <label for="bt-baud">baud</label>
+      <input id="bt-baud" data-role="cfg-baud" type="number" min="1" />
+      <label for="bt-source">source</label>
+      <select id="bt-source" data-role="cfg-source">
+        <option value="real">real</option>
+        <option value="mock">mock</option>
+      </select>
+      <label for="bt-offline">offline after (s)</label>
+      <input id="bt-offline" data-role="cfg-offline" type="number" min="0" step="0.1" />
+      <div class="settings-actions">
+        <button data-role="cfg-save" type="button">Apply</button>
+        <span class="settings-status" data-role="cfg-status"></span>
+      </div>
+    </div>
+    <div class="log" data-role="log"></div>
+  </section>
+  <section class="pane" data-toadlet="rfid">
+    <h2>
+      RFID Toadlet
+      <span>
+        <span class="status" data-role="online">-</span>
+        <span class="status" data-role="mode">-</span>
+        <button class="settings-toggle" data-role="settings-toggle" type="button">&#9881;</button>
+      </span>
+    </h2>
+    <div class="mode-row">
+      <select data-role="mode-select"></select>
+      <input data-role="mode-param" placeholder="param" />
+      <button data-role="mode-set">Set</button>
+    </div>
+    <div class="settings" data-role="settings" hidden>
+      <label for="rfid-device">device</label>
+      <input id="rfid-device" data-role="cfg-device" list="serial-ports" placeholder="/dev/ttyUSB0" />
+      <label for="rfid-baud">baud</label>
+      <input id="rfid-baud" data-role="cfg-baud" type="number" min="1" />
+      <label for="rfid-source">source</label>
+      <select id="rfid-source" data-role="cfg-source">
+        <option value="real">real</option>
+        <option value="mock">mock</option>
+      </select>
+      <label for="rfid-offline">offline after (s)</label>
+      <input id="rfid-offline" data-role="cfg-offline" type="number" min="0" step="0.1" />
+      <label for="rfid-region">region</label>
+      <input id="rfid-region" data-role="cfg-region" placeholder="NORTHAMERICA" />
+      <label for="rfid-power">read power (cdBm)</label>
+      <input id="rfid-power" data-role="cfg-power" type="number" min="0" max="2700" />
+      <div class="settings-actions">
+        <button data-role="cfg-save" type="button">Apply</button>
+        <span class="settings-status" data-role="cfg-status"></span>
+      </div>
+    </div>
+    <div class="log" data-role="log"></div>
+  </section>
+</div>
+<script>
+const MAX_LOG_LINES = 200;
+
+async function loadSerialPorts() {
+  const datalist = document.getElementById('serial-ports');
+  try {
+    const info = await (await fetch('/api/ports')).json();
+    for (const port of info.ports) {
+      const opt = document.createElement('option');
+      opt.value = port.device;
+      opt.label = port.description || port.device;
+      datalist.appendChild(opt);
+    }
+  } catch (err) {
+    // Port listing is a UX nicety (autocomplete) -- if it fails, the
+    // device field still works as a plain free-text input.
+  }
+}
+
+function initSettingsPanel(pane, toadlet) {
+  const toggle = pane.querySelector('[data-role="settings-toggle"]');
+  const panel = pane.querySelector('[data-role="settings"]');
+  const deviceInput = pane.querySelector('[data-role="cfg-device"]');
+  const baudInput = pane.querySelector('[data-role="cfg-baud"]');
+  const sourceSelect = pane.querySelector('[data-role="cfg-source"]');
+  const offlineInput = pane.querySelector('[data-role="cfg-offline"]');
+  const regionInput = pane.querySelector('[data-role="cfg-region"]');
+  const powerInput = pane.querySelector('[data-role="cfg-power"]');
+  const saveButton = pane.querySelector('[data-role="cfg-save"]');
+  const statusLabel = pane.querySelector('[data-role="cfg-status"]');
+  let loaded = false;
+
+  async function loadConfig() {
+    const config = await (await fetch(`/api/${toadlet}/config`)).json();
+    deviceInput.value = config.device || '';
+    baudInput.value = config.baud;
+    sourceSelect.value = config.source;
+    offlineInput.value = config.offline_threshold_s;
+    if (regionInput) regionInput.value = config.region || '';
+    if (powerInput) powerInput.value = config.read_power_cdbm ?? '';
+    loaded = true;
+  }
+
+  toggle.addEventListener('click', async () => {
+    const willShow = panel.hidden;
+    panel.hidden = !willShow;
+    if (willShow && !loaded) {
+      statusLabel.textContent = 'loading...';
+      try {
+        await loadConfig();
+        statusLabel.textContent = '';
+      } catch (err) {
+        statusLabel.textContent = 'failed to load config';
+      }
+    }
+  });
+
+  saveButton.addEventListener('click', async () => {
+    const body = {
+      source: sourceSelect.value,
+      device: deviceInput.value || null,
+      baud: Number(baudInput.value),
+      offline_threshold_s: Number(offlineInput.value),
+    };
+    if (regionInput) body.region = regionInput.value || 'NORTHAMERICA';
+    if (powerInput) body.read_power_cdbm = Number(powerInput.value || 500);
+
+    statusLabel.textContent = 'applying...';
+    saveButton.disabled = true;
+    try {
+      const resp = await fetch(`/api/${toadlet}/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const err = await resp.json();
+        statusLabel.textContent = `failed: ${err.detail}`;
+      } else {
+        statusLabel.textContent = 'applied';
+      }
+    } catch (err) {
+      statusLabel.textContent = 'failed: request error';
+    } finally {
+      saveButton.disabled = false;
+    }
+  });
+}
+
+async function initPane(pane) {
+  const toadlet = pane.dataset.toadlet;
+  const modeLabel = pane.querySelector('[data-role="mode"]');
+  const onlineLabel = pane.querySelector('[data-role="online"]');
+  const captureLabel = pane.querySelector('[data-role="capture"]');
+  const modeSelect = pane.querySelector('[data-role="mode-select"]');
+  const modeParam = pane.querySelector('[data-role="mode-param"]');
+  const modeButton = pane.querySelector('[data-role="mode-set"]');
+  const log = pane.querySelector('[data-role="log"]');
+
+  initSettingsPanel(pane, toadlet);
+
+  const modesInfo = await (await fetch(`/api/${toadlet}/modes`)).json();
+  for (const mode of modesInfo.modes) {
+    const opt = document.createElement('option');
+    opt.value = mode;
+    opt.textContent = mode;
+    modeSelect.appendChild(opt);
+  }
+  modeSelect.value = modesInfo.current_mode;
+  modeLabel.textContent = modesInfo.current_mode;
+
+  modeButton.addEventListener('click', async () => {
+    const resp = await fetch(`/api/${toadlet}/mode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: modeSelect.value, param: modeParam.value || null }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      alert(`Mode change failed: ${err.detail}`);
+    }
+  });
+
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const socket = new WebSocket(`${proto}://${location.host}/ws/${toadlet}`);
+  socket.addEventListener('message', (msg) => {
+    const payload = JSON.parse(msg.data);
+    if (payload.kind === 'status') {
+      modeLabel.textContent = payload.data.mode;
+      modeSelect.value = payload.data.mode;
+      onlineLabel.textContent = payload.data.online ? 'online' : 'offline';
+      onlineLabel.classList.toggle('online', payload.data.online);
+      onlineLabel.classList.toggle('offline', !payload.data.online);
+      if (payload.data.capture_active !== undefined) {
+        captureLabel.hidden = !payload.data.capture_active;
+        if (payload.data.capture_active) {
+          captureLabel.textContent = `capturing... ${payload.data.capture_bytes} B`;
+        }
+      }
+    } else if (payload.kind === 'event') {
+      const line = document.createElement('div');
+      const ts = new Date(payload.data.pi_ts * 1000).toLocaleTimeString();
+      line.textContent = `[${ts}] ${JSON.stringify(payload.data.event)}`;
+      log.prepend(line);
+      while (log.children.length > MAX_LOG_LINES) {
+        log.removeChild(log.lastChild);
+      }
+    }
+  });
+}
+
+loadSerialPorts();
+document.querySelectorAll('.pane').forEach(initPane);
+</script>
+</body>
+</html>
