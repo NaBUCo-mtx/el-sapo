@@ -349,7 +349,12 @@ async function initPane(pane) {
     const payload = JSON.parse(msg.data);
     if (payload.kind === 'status') {
       modeLabel.textContent = payload.data.mode;
-      modeSelect.value = payload.data.mode;
+      // Only synced from live status when the user isn't actively picking a
+      // mode -- otherwise this overwrites their in-progress selection every
+      // second, before they get a chance to click "Set".
+      if (document.activeElement !== modeSelect) {
+        modeSelect.value = payload.data.mode;
+      }
       onlineLabel.textContent = payload.data.online ? 'online' : 'offline';
       onlineLabel.classList.toggle('online', payload.data.online);
       onlineLabel.classList.toggle('offline', !payload.data.online);
